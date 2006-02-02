@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE package SYSTEM "http://pear.php.net/dtd/package-1.0">
+<package>
+  <name>CodeGen_MySQL</name>
+  <summary>Abstract base package for MySQL code generators</summary>
+  <status>alpha</status>
+  <maintainers>
+    <maintainer>
+      <user>hholzgra</user>
+      <name>Hartmut Holzgraefe</name>
+      <email>hartmut@php.net</email>
+      <role>lead</role>
+    </maintainer>
+  </maintainers>
+  <description>
+   ...
+  </description>
+
+  <license>PHP</license>
+
+  <release>
+    <state>alpha</state>
+    <version>0.1.1dev</version>
+    <date>2005-09-06</date>
+    <notes>
+     initial package for proposal process
+    </notes>
+    <deps>
+      <dep type="php" rel="ge" version="5.0"/>
+      <dep type="pkg" rel="ge" version="1.2">PEAR</dep>
+      <dep type="pkg" rel="ge" version="0.9">CodeGen</dep>
+    </deps>
+    <filelist>
+      <dir name="/" baseinstalldir="CodeGen">
+        <dir name="MySQL">
+          <file role="php">Extension.php</file>
+          <file role="php">ExtensionParser.php</file>
+        </dir>
+      </dir>
+    </filelist>
+  </release>
+</package>
+
