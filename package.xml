@@ -36,6 +36,8 @@
           <file role="php">Extension.php</file>
           <file role="php">ExtensionParser.php</file>
         </dir>
+        <file role="data">mysql.m4</file>
+        <file role="data">ax_compare_version.m4</file>
       </dir>
     </filelist>
   </release>
