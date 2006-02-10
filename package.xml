@@ -33,7 +33,9 @@
     <filelist>
       <dir name="/" baseinstalldir="CodeGen">
         <dir name="MySQL">
-          <file role="php">Extension.php</file>
+          <file role="php" name="Extension.php">
+            <replace type="pear-config" from="@DATADIR@" to="data_dir" />
+          </file>
           <file role="php">ExtensionParser.php</file>
         </dir>
         <file role="data">mysql.m4</file>
