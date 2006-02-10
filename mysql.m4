@@ -5,7 +5,17 @@ dnl
 m4_include([ax_compare_version.m4])
 
 AC_DEFUN([MYSQL_CHECK_VERSION], [
-	  AX_COMPARE_VERSION([$MYSQL_VERSION], [GE], [$1], [$2], [$3])
+  AX_COMPARE_VERSION([$MYSQL_VERSION], [GE], [$1], 
+	[AC_MSG_RESULT([yes ($MYSQL_VERSION)])], 
+	[AC_MSG_ERROR([no ($MYSQL_VERSION)])])
+])
+
+
+AC_DEFUN([MYSQL_NEED_VERSION], [
+  AC_MSG_CHECKING([mysql version >= $1])
+  MYSQL_CHECK_VERSION([$1], 
+	[AC_MSG_RESULT([yes ($MYSQL_VERSION)])], 
+	[AC_MSG_ERROR([no ($MYSQL_VERSION)])])
 ])
 
 AC_DEFUN([WITH_MYSQL], [ 
@@ -45,10 +55,19 @@ AC_DEFUN([MYSQL_USE_CLIENT_API], [
   # add regular MySQL C flags
   ADDFLAGS=`$MYSQL_CONFIG --include` 
 
-  CFLAGS="$CFLAGS $ADDFLAGS"    
-  CXXFLAGS="$CXXFLAGS $ADDFLAGS"    
+  MYSQL_CFLAGS="$MYSQL_CFLAGS $ADDFLAGS"    
+  MYSQL_CXXFLAGS="$MYSQL_CXXFLAGS $ADDFLAGS"    
 
-  LDFLAGS="$LDFLAGS "`$MYSQL_CONFIG --libs_r`    
+  # add linker flags for client lib
+  MYSQL_LDFLAGS="$MYSQL_LDFLAGS "`$MYSQL_CONFIG --libs_r`    
+])
+
+AC_DEFUN([MYSQL_USE_UDF_API], [
+  # add regular MySQL C flags
+  ADDFLAGS=`$MYSQL_CONFIG --include` 
+
+  MYSQL_CFLAGS="$MYSQL_CFLAGS $ADDFLAGS"    
+  MYSQL_CXXFLAGS="$MYSQL_CXXFLAGS $ADDFLAGS"    
 ])
 
 
@@ -72,11 +91,11 @@ AC_DEFUN([MYSQL_USE_NDB_API], [
     ADDFLAGS="$ADDFLAGS $IBASE/ndbapi"
     ADDFLAGS="$ADDFLAGS $IBASE/mgmapi"
 
-    CFLAGS="$CFLAGS $ADDFLAGS"
-    CXXFLAGS="$CXXFLAGS $ADDFLAGS"
+    MYSQL_CFLAGS="$MYSQL_CFLAGS $ADDFLAGS"
+    MYSQL_CXXFLAGS="$MYSQL_CXXFLAGS $ADDFLAGS"
 
     # add the ndbapi specific static libs
-    LIBS="$LIBS -lndbclient -lmystrings -lmysys"    
+    MYSQL_LIBS="$MYSQL_LIBS -lndbclient -lmystrings -lmysys"    
   ],[
     AC_ERROR(["NdbApi needs at lest MySQL 5.0"])
   ])
@@ -85,13 +104,23 @@ AC_DEFUN([MYSQL_USE_NDB_API], [
 
 
 AC_DEFUN([MYSQL_USE_PLUGIN_API], [
+  # plugin interface is only availabe starting with MySQL 5.1
+  MYSQL_NEED_VERSION([5.1.0])
+
   # for plugins the recommended way to include plugin.h 
   # is <mysql/plugin.h>, not <plugin.h>, so we have to
   # strip thetrailing /mysql from the include paht 
   # reported by mysql_config
   ADDFLAGS=`$MYSQL_CONFIG --include | sed -e"s/\/mysql\$//g"` 
 
-  CFLAGS="$CFLAGS $ADDFLAGS"    
-  CXXFLAGS="$CXXFLAGS $ADDFLAGS"    
+  MYSQL_CFLAGS="$MYSQL_CFLAGS $ADDFLAGS"    
+  MYSQL_CXXFLAGS="$MYSQL_CXXFLAGS $ADDFLAGS"    
+])
+
+AC_DEFUN([MYSQL_AC_SUBST], [
+  AC_SUBST([MYSQL_CFLAGS])
+  AC_SUBST([MYSQL_CXXFLAGS])
+  AC_SUBST([MYSQL_LDFLAGS])
+  AC_SUBST([MYSQL_LIBS])
 ])
 
