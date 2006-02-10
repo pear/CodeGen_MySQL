@@ -286,6 +286,11 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo $t
      * @access protected
      */
     function writeConfig() {
+        // copy .m4 include files
+        foreach (glob("@DATADIR@/CodeGen_MySQL/*.m4") as $file) {
+            copy($file, $this->dirpath."/".basename($file));
+        }
+
         // Makefile.am
         $makefile = new CodeGen_Tools_Outbuf($this->dirpath."/Makefile.am");
 
@@ -303,6 +308,17 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo $t
 
         $makefile->write();
     
+        
+        // acinclude.m4
+        $acinclude = new CodeGen_Tools_Outbuf($this->dirpath."/acinclude.m4");
+        foreach ($this->acfragments["top"] as $fragment) {
+            echo "$fragment\n";
+        }        
+        echo "m4_include([mysql.m4])\n";
+        foreach ($this->acfragments["bottom"] as $fragment) {
+            echo "$fragment\n";
+        }        
+        $acinclude->write();
 
 
         // configure.in
@@ -311,90 +327,28 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo $t
         echo "AC_INIT({$this->name}.".$this->language.")\n";
         echo "AM_INIT_AUTOMAKE({$this->name}.so, 1.0)\n";
         echo "\n";
-        
-        echo "AC_PROG_LIBTOOL\n";
-
-        if ($this->language === "cpp") {
-            echo "AC_PROG_CXX\n";
-        }
 
         foreach ($this->configfragments['top'] as $fragment) {
             echo "$fragment\n";
         }
+        
+        echo "AC_PROG_LIBTOOL\n";
 
-        echo '
-searchin="/usr /usr/local /usr/local/mysql"
-AC_ARG_WITH(mysql, 
-    AC_HELP_STRING([--with-mysql=PATH], [path to mysql_config or mysql install dir]), 
-    [
-      case $withval in
-        (yes)
-          mysql_config=""
-        ;;
-        (no)
-          mysql_config=""
-        ;;
-        (*)
-          mysql_config="$withval"
-        ;;  
-      esac
-    ], 
-    [])
+        echo "AC_PROG_CC\n";
+        if ($this->language === "cpp") {
+            echo "AC_PROG_CXX\n";
+            echo "AC_LANG([C++])\n";
+        }
 
-AC_MSG_CHECKING(for mysql_config)
+        echo "WITH_MYSQL()\n";
 
-if test -z "$mysql_config"
-then
-  if ! mysql_config=`which mysql_config`
-  then
-    AC_MSG_ERROR(mysql_config not found in PATH, please use --with-mysql=...)
-  fi
-else
-  if test -d "$mysql_config"
-  then
-    if test -x "$mysql_config/bin/mysql_config"
-    then
-      mysql_config="$mysql_config/bin/mysql_config"
-    else
-      AC_MSG_ERROR($mysql_config not found or not executable)
-    fi
-  fi
-fi
+        foreach ($this->configfragments['bottom'] as $fragment) {
+            echo "$fragment\n";
+        }
 
-if test -z "$mysql_config"
-then
-  AC_MSG_ERROR(UDFs require mysql_config to detect needed CFLAGS)
-fi
+        echo "MYSQL_AC_SUBST()\n";
 
-AC_MSG_RESULT($mysql_config)
-
-AC_MSG_CHECKING(for MySQL CFLAGS) 
-
-if ! mysql_cflags=`$mysql_config --udf-cflags 2>/dev/null`
-then
-  if ! mysql_cflags=`$mysql_config --cflags 2>/dev/null`
-  then
-    AC_MSG_ERROR(cannot detect --udf-cflags or --cflags)
-  fi
-fi
-
-AC_MSG_RESULT($mysql_cflags)
-
-AC_ARG_WITH(debug,
-    [  --with-debug            Build test version with debugging code],
-    [with_debug=$withval],
-    [with_debug=no])
-if test "$with_debug" = "yes"
-then
-  mysql_cflags="$mysql_cflags -DDEBUG -DDBUG_ON"
-else
-  mysql_cflags="$mysql_cflags -DNDEBUG -DDBUG_OFF"
-fi
-
-AC_SUBST(MYSQL_CFLAGS, $mysql_cflags)
-
-AC_OUTPUT(Makefile)
-';
+        echo "AC_OUTPUT(Makefile)\n";
 
         $configure->write();
     }
