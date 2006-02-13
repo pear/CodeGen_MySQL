@@ -2,6 +2,8 @@ dnl
 dnl configure.in helper macros
 dnl 
  
+dnl TODO: fix "mutual exclusive" stuff
+
 dnl 3rd party macro for version number comparisons
 m4_include([ax_compare_version.m4])
 
@@ -13,6 +15,12 @@ dnl WITH_MYSQL()
 dnl
 AC_DEFUN([WITH_MYSQL], [ 
   AC_MSG_CHECKING(for mysql_config executable)
+
+dnl  # reject if --with-mysql-src= was already found
+dnl  if test "x$MYSQL_SRCDIR" != "x"
+dnl  then
+dnl    AC_MSG_ERROR([--with-mysql and --with-mysql-src are mutual exclusive])
+dnl  fi
 
   # try to find the mysql_config script,
   # --with-mysql will either accept its path directly
@@ -45,6 +53,9 @@ AC_DEFUN([WITH_MYSQL], [
     # get installed version
     MYSQL_VERSION=`$MYSQL_CONFIG --version`
 
+	MYSQL_CONFIG_INCLUDE=`$MYSQL_CONFIG --include`
+	MYSQL_CONFIG_LIBS_R=`$MYSQL_CONFIG --libs_r`
+
 	# register replacement vars, these will be filled
     # with contant by the other macros 
 	AC_SUBST([MYSQL_CFLAGS])
@@ -55,6 +66,56 @@ AC_DEFUN([WITH_MYSQL], [
 
 	
     AC_MSG_RESULT($MYSQL_CONFIG)
+  fi
+])
+
+
+
+dnl check for a --with-mysql-src configure option and set up
+dnl MYSQL_CONFIG and MYSLQ_VERSION variables for further use
+dnl this must always be called before any other macro from this file
+dnl
+dnl WITH_MYSQL_SRC()
+dnl
+AC_DEFUN([WITH_MYSQL_SRC], [ 
+  AC_MSG_CHECKING(for mysql source directory)
+
+dnl  if test "x$MYSQL_CONFIG" != "x"
+dnl  then
+dnl    AC_MSG_ERROR([--with-mysql and --with-mysql-src are mutual exclusive])
+dnl  fi
+
+  AC_ARG_WITH(mysql-src, [  --with-mysql-src=PATH	path to mysql sourcecode], [
+    if test -f $withval/include/mysql_version.h.in
+    then
+		if test -f $withval/include/mysql_version.h
+		then
+		    AC_MSG_RESULT(ok)
+			MYSQL_SRCDIR=$withval
+			MYSQL_VERSION=`grep MYSQL_SERVER_VERSION ./mysql-4.1.10a/include/mysql_version.h | sed -e's/"$//g' -e's/.*"//g'`
+		else
+			AC_MSG_ERROR([not configured yet])
+		fi
+	else
+		AC_MSG_ERROR([$withval doesn't look like a mysql source dir])
+    fi
+  ], [
+	AC_MSG_ERROR([no path given])
+  ])
+
+	MYSQL_CONFIG_INCLUDE="-I$withval/include"
+	MYSQL_CONFIG_LIBS_R="-L$withval/libmysql_r/.libs -lmysqlclient_r -lz -lm"
+
+
+	# register replacement vars, these will be filled
+    # with contant by the other macros 
+	AC_SUBST([MYSQL_CFLAGS])
+  	AC_SUBST([MYSQL_CXXFLAGS])
+  	AC_SUBST([MYSQL_LDFLAGS])
+  	AC_SUBST([MYSQL_LIBS])
+  	AC_SUBST([MYSQL_VERSION])
+
+	
   fi
 ])
 
@@ -91,13 +152,13 @@ dnl MYSQL_USE_CLIENT_API()
 dnl
 AC_DEFUN([MYSQL_USE_CLIENT_API], [
   # add regular MySQL C flags
-  ADDFLAGS=`$MYSQL_CONFIG --include` 
+  ADDFLAGS=$MYSQL_CONFIG_INCLUDE 
 
   MYSQL_CFLAGS="$MYSQL_CFLAGS $ADDFLAGS"    
   MYSQL_CXXFLAGS="$MYSQL_CXXFLAGS $ADDFLAGS"    
 
   # add linker flags for client lib
-  MYSQL_LDFLAGS="$MYSQL_LDFLAGS "`$MYSQL_CONFIG --libs_r`    
+  MYSQL_LDFLAGS="$MYSQL_LDFLAGS $MYSQL_CONFIG_LIBS_R"
 ])
 
 
@@ -112,13 +173,24 @@ AC_DEFUN([MYSQL_USE_NDB_API], [
     # mysql_config results need some post processing for now
 
     # the include pathes changed in 5.1.x due
-    # to the pluggable storage engine clenups
-    IBASE=`$MYSQL_CONFIG --include`
+    # to the pluggable storage engine clenups,
+	# it also dependes on whether we build against
+	# mysql source or installed headers
+	if test "x$MYSQL_SRCDIR" = "x"
+    then 
+      IBASE=$MYSQL_CONFIG_INCLUDE
+    else
+      IBASE=$MYSQL_SRCDIR
+    fi
     MYSQL_CHECK_VERSION([5.1.0], [
       IBASE="$IBASE/storage/ndb"
     ],[
       IBASE="$IBASE/ndb"
     ])
+	if test "x$MYSQL_SRCDIR" != "x"
+    then 
+      IBASE="$MYSQL_SRCDIR/include"
+    fi
 
     # add the ndbapi specifc include dirs
     ADDFLAGS="$ADDFLAGS $IBASE"
@@ -143,7 +215,7 @@ dnl MYSQL_USE_UDF_API()
 dnl
 AC_DEFUN([MYSQL_USE_UDF_API], [
   # add regular MySQL C flags
-  ADDFLAGS=`$MYSQL_CONFIG --include` 
+  ADDFLAGS=$MYSQL_CONFIG_INCLUDE 
 
   MYSQL_CFLAGS="$MYSQL_CFLAGS $ADDFLAGS"    
   MYSQL_CXXFLAGS="$MYSQL_CXXFLAGS $ADDFLAGS"    
@@ -163,7 +235,7 @@ AC_DEFUN([MYSQL_USE_PLUGIN_API], [
   # is <mysql/plugin.h>, not <plugin.h>, so we have to
   # strip thetrailing /mysql from the include paht 
   # reported by mysql_config
-  ADDFLAGS=`$MYSQL_CONFIG --include | sed -e"s/\/mysql\$//g"` 
+  ADDFLAGS=`echo $MYSQL_CONFIG_INCLUDE | sed -e"s/\/mysql\$//g"` 
 
   MYSQL_CFLAGS="$MYSQL_CFLAGS $ADDFLAGS"    
   MYSQL_CXXFLAGS="$MYSQL_CXXFLAGS $ADDFLAGS"    
