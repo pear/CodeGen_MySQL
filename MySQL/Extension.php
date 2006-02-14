@@ -346,6 +346,8 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo $t
             echo "$fragment\n";
         }
 
+        echo "MYSQL_SUBST()\n";
+
         echo "AC_OUTPUT(Makefile)\n";
 
         $configure->write();
