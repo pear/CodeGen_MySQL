@@ -7,6 +7,8 @@ dnl TODO: fix "mutual exclusive" stuff
 dnl 3rd party macro for version number comparisons
 m4_include([ax_compare_version.m4])
 
+MYSQL_VERSION=none
+
 dnl check for a --with-mysql configure option and set up
 dnl MYSQL_CONFIG and MYSLQ_VERSION variables for further use
 dnl this must always be called before any other macro from this file
@@ -16,56 +18,61 @@ dnl
 AC_DEFUN([WITH_MYSQL], [ 
   AC_MSG_CHECKING(for mysql_config executable)
 
-dnl  # reject if --with-mysql-src= was already found
-dnl  if test "x$MYSQL_SRCDIR" != "x"
-dnl  then
-dnl    AC_MSG_ERROR([--with-mysql and --with-mysql-src are mutual exclusive])
-dnl  fi
-
   # try to find the mysql_config script,
   # --with-mysql will either accept its path directly
   # or will treat it as the mysql install prefix and will 
   # search for the script in there
   # if no path is given at all we look for the script in
   # /usr/bin and /usr/local/mysql/bin
-  AC_ARG_WITH(mysql, [  --with-mysql=PATH	path to mysql_config binary or mysql prefix dir], [
-    if test -x $withval -a -f $withval
+  AC_ARG_WITH(mysql, [  --with-mysql=PATH   path to mysql_config binary or mysql prefix dir], [
+    if test $withval == "no"
     then
-      MYSQL_CONFIG=$withval
-    elif test -x $withval/bin/mysql_config -a -f $withval/bin/mysql_config
-    then 
-      MYSQL_CONFIG=$withval/bin/mysql_config
+      MYSQL_CONFIG="no"
+    else
+      if test -x $withval -a -f $withval
+      then
+        MYSQL_CONFIG=$withval
+      elif test -x $withval/bin/mysql_config -a -f $withval/bin/mysql_config
+      then 
+        MYSQL_CONFIG=$withval/bin/mysql_config
+      fi
     fi
   ], [
-    if test -x /usr/local/mysql/bin/mysql_config -a -f /usr/local/mysql/bin/mysql_config
+    # implicit "yes", check in $PATH and in known default prefix, 
+    # but only if source not already configured
+    if test "x$MYSQL_SRCDIR" != "x"
+    then
+      MYSQL_CONFIG="no"
+    elif MYSQL_CONFIG=`which mysql_config` 
+    then      
+      true # noop
+    elif test -x /usr/local/mysql/bin/mysql_config -a -f /usr/local/mysql/bin/mysql_config 
     then
       MYSQL_CONFIG=/usr/local/mysql/bin/mysql_config
-    elif test -x /usr/bin/mysql_config -a -f /usr/bin/mysql_config
-    then
-      MYSQL_CONFIG=/usr/bin/mysql_config
     fi
   ])
 
   if test "x$MYSQL_CONFIG" = "x" 
   then
-    AC_MSG_ERROR(not found)
+    AC_MSG_ERROR([not found])
+  elif test "$MYSQL_CONFIG" = "no" 
+  then
+    MYSQL_CONFIG=""
+    AC_MSG_RESULT([no])
   else
-    # get installed version
-    MYSQL_VERSION=`$MYSQL_CONFIG --version`
+    if test "x$MYSQL_SRCDIR" != "x"
+    then
+      AC_MSG_ERROR("--with-mysql can't be used together with --with-mysql-src")
+    else
+      # get installed version
+      MYSQL_VERSION=`$MYSQL_CONFIG --version`
 
-	MYSQL_CONFIG_INCLUDE=`$MYSQL_CONFIG --include`
-	MYSQL_CONFIG_LIBS_R=`$MYSQL_CONFIG --libs_r`
+      MYSQL_CONFIG_INCLUDE=`$MYSQL_CONFIG --include`
+      MYSQL_CONFIG_LIBS_R=`$MYSQL_CONFIG --libs_r`
 
-	# register replacement vars, these will be filled
-    # with contant by the other macros 
-	AC_SUBST([MYSQL_CFLAGS])
-  	AC_SUBST([MYSQL_CXXFLAGS])
-  	AC_SUBST([MYSQL_LDFLAGS])
-  	AC_SUBST([MYSQL_LIBS])
-  	AC_SUBST([MYSQL_VERSION])
 
-	
-    AC_MSG_RESULT($MYSQL_CONFIG)
+      AC_MSG_RESULT($MYSQL_CONFIG)
+    fi
   fi
 ])
 
@@ -75,50 +82,64 @@ dnl check for a --with-mysql-src configure option and set up
 dnl MYSQL_CONFIG and MYSLQ_VERSION variables for further use
 dnl this must always be called before any other macro from this file
 dnl
+dnl if you use this together with WITH_MYSQL you have to put this in front of it
+dnl
 dnl WITH_MYSQL_SRC()
 dnl
 AC_DEFUN([WITH_MYSQL_SRC], [ 
   AC_MSG_CHECKING(for mysql source directory)
 
-dnl  if test "x$MYSQL_CONFIG" != "x"
-dnl  then
-dnl    AC_MSG_ERROR([--with-mysql and --with-mysql-src are mutual exclusive])
-dnl  fi
+  AC_ARG_WITH(mysql-src, [  --with-mysql-src=PATH   path to mysql sourcecode], [
+    if test "x$MYSQL_CONFIG" != "x"
+    then
+      AC_MSG_ERROR([--with-mysql-src can't be used together with --with-mysql])
+    fi
 
-  AC_ARG_WITH(mysql-src, [  --with-mysql-src=PATH	path to mysql sourcecode], [
     if test -f $withval/include/mysql_version.h.in
     then
-		if test -f $withval/include/mysql_version.h
-		then
-		    AC_MSG_RESULT(ok)
-			MYSQL_SRCDIR=$withval
-			MYSQL_VERSION=`grep MYSQL_SERVER_VERSION ./mysql-4.1.10a/include/mysql_version.h | sed -e's/"$//g' -e's/.*"//g'`
-		else
-			AC_MSG_ERROR([not configured yet])
-		fi
-	else
-		AC_MSG_ERROR([$withval doesn't look like a mysql source dir])
+        if test -f $withval/include/mysql_version.h
+        then
+            AC_MSG_RESULT(ok)
+            MYSQL_SRCDIR=$withval
+            MYSQL_VERSION=`grep MYSQL_SERVER_VERSION $MYSQL_SRCDIR/include/mysql_version.h | sed -e's/"$//g' -e's/.*"//g'`
+        else
+            AC_MSG_ERROR([not configured yet])
+        fi
+    else
+        AC_MSG_ERROR([$withval doesn't look like a mysql source dir])
     fi
   ], [
-	AC_MSG_ERROR([no path given])
+        AC_MSG_RESULT(no)
   ])
 
-	MYSQL_CONFIG_INCLUDE="-I$withval/include"
-	MYSQL_CONFIG_LIBS_R="-L$withval/libmysql_r/.libs -lmysqlclient_r -lz -lm"
-
-
-	# register replacement vars, these will be filled
-    # with contant by the other macros 
-	AC_SUBST([MYSQL_CFLAGS])
-  	AC_SUBST([MYSQL_CXXFLAGS])
-  	AC_SUBST([MYSQL_LDFLAGS])
-  	AC_SUBST([MYSQL_LIBS])
-  	AC_SUBST([MYSQL_VERSION])
-
-	
+  if test "x$MYSQL_SRCDIR" != "x"
+  then
+    MYSQL_CONFIG_INCLUDE="-I$MYSQL_SRCDIR/include"
+    MYSQL_CONFIG_LIBS_R="-L$MYSQL_SRCDIR/libmysql_r/.libs -lmysqlclient_r -lz -lm"
   fi
 ])
 
+
+dnl
+dnl check for successfull mysql detection
+dnl and register AC_SUBST variables
+dnl
+dnl MYSQL_SUBST()
+dnl
+AC_DEFUN([MYSQL_SUBST], [
+  if test "$MYSQL_VERSION" == "none" 
+  then
+    AC_MSG_ERROR([MySQL required but not found])
+  fi
+   
+  # register replacement vars, these will be filled
+  # with contant by the other macros 
+  AC_SUBST([MYSQL_CFLAGS])
+  AC_SUBST([MYSQL_CXXFLAGS])
+  AC_SUBST([MYSQL_LDFLAGS])
+  AC_SUBST([MYSQL_LIBS])
+  AC_SUBST([MYSQL_VERSION])
+])
 
 
 dnl check if current MySQL version meets a version requirement
@@ -140,8 +161,8 @@ dnl
 AC_DEFUN([MYSQL_NEED_VERSION], [
   AC_MSG_CHECKING([mysql version >= $1])
   MYSQL_CHECK_VERSION([$1], 
-	[AC_MSG_RESULT([yes ($MYSQL_VERSION)])], 
-	[AC_MSG_ERROR([no ($MYSQL_VERSION)])])
+    [AC_MSG_RESULT([yes ($MYSQL_VERSION)])], 
+    [AC_MSG_ERROR([no ($MYSQL_VERSION)])])
 ])
 
 
@@ -174,9 +195,9 @@ AC_DEFUN([MYSQL_USE_NDB_API], [
 
     # the include pathes changed in 5.1.x due
     # to the pluggable storage engine clenups,
-	# it also dependes on whether we build against
-	# mysql source or installed headers
-	if test "x$MYSQL_SRCDIR" = "x"
+    # it also dependes on whether we build against
+    # mysql source or installed headers
+    if test "x$MYSQL_SRCDIR" = "x"
     then 
       IBASE=$MYSQL_CONFIG_INCLUDE
     else
@@ -187,7 +208,7 @@ AC_DEFUN([MYSQL_USE_NDB_API], [
     ],[
       IBASE="$IBASE/ndb"
     ])
-	if test "x$MYSQL_SRCDIR" != "x"
+    if test "x$MYSQL_SRCDIR" != "x"
     then 
       IBASE="$MYSQL_SRCDIR/include"
     fi
