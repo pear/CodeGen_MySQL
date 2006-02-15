@@ -340,8 +340,6 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo $t
             echo "AC_LANG([C++])\n";
         }
 
-        echo "WITH_MYSQL()\n";
-
         foreach ($this->configfragments['bottom'] as $fragment) {
             echo "$fragment\n";
         }
