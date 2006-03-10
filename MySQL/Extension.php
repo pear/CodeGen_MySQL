@@ -36,6 +36,8 @@ require_once "CodeGen/Tools/Platform.php";
 
 require_once "CodeGen/Tools/Indent.php";
 
+require_once "CodeGen/MySQL/Element/Test.php";
+
 // }}} 
 
 /**
@@ -52,6 +54,13 @@ require_once "CodeGen/Tools/Indent.php";
 abstract class CodeGen_MySQL_Extension 
     extends CodeGen_Extension
 {
+    /** 
+     * Custom test cases
+     *
+     * @var array
+     */
+    protected $testcases = array();
+
     // {{{ constructor
     
     /**
@@ -228,6 +237,9 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo $t
         // generate README file
         $this->writeReadme();
 
+        // write test files
+        $this->writeTests();
+
         // generate INSTALL file
         $this->writeInstall();
 
@@ -377,7 +389,51 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo $t
         // generate autoconf/automake files
         $this->writeConfig();
     }
-    
+
+
+    /**
+     * add a custom test case
+     *
+     * @access public
+     * @param  object  a Test object
+     */
+    function addTest(CodeGen_MySQL_Element_Test $test) {
+        $name = $test->getName();
+       
+        if (isset($this->testcases[$name])) {
+            return PEAR::raiseError("testcase '{$name}' added twice");
+        }
+
+        $this->testcases[$name] = $test;
+        return true;
+    }
+
+    /**
+     * Create test files
+     *
+     */
+    function writeTests()
+    {
+        @mkdir($this->dirpath."/tests");
+        @mkdir($this->dirpath."/tests/t");
+        @mkdir($this->dirpath."/tests/r");
+
+#        // function related tests
+#        foreach ($this->functions as $function) {
+#            $function->writeTest($this);
+#        }
+
+        // custom test cases (may overwrite custom function test cases)
+        foreach ($this->testcases as $test) {
+            $test->writeTest($this);
+        }
+    }
+
+    function testFactory()
+    {
+        error_log("MySQL test factory");
+        return new CodeGen_MySQL_Element_Test(); 
+    }
 }   
 
 

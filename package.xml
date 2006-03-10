@@ -37,6 +37,9 @@
             <replace type="pear-config" from="@DATADIR@" to="data_dir" />
           </file>
           <file role="php">ExtensionParser.php</file>
+          <dir name="Element">
+            <file role="php">Test.php</file>
+          </dir>
         </dir>
         <file role="data" name="data/ax_compare_version.m4" install-as="ax_compare_version.m4" />
         <file role="data" name="data/mysql.m4" install-as="mysql.m4" />
