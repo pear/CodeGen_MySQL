@@ -222,7 +222,7 @@ AC_DEFUN([MYSQL_USE_NDB_API], [
     MYSQL_CXXFLAGS="$MYSQL_CXXFLAGS $ADDFLAGS"
 
     # add the ndbapi specific static libs
-    MYSQL_LIBS="$MYSQL_LIBS -lndbclient -lmystrings -lmysys"    
+    MYSQL_LIBS="$MYSQL_LIBS -lndbclient -lmysys -lmystrings "    
   ],[
     AC_ERROR(["NdbApi needs at lest MySQL 5.0"])
   ])
