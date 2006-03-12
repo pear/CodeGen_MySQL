@@ -317,6 +317,8 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo $t
             }
         }
         echo "\n";
+        echo "test: all\n";
+        echo "\tcd tests; ./test.sh\n";
 
         $makefile->write();
     
@@ -418,10 +420,9 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo $t
         @mkdir($this->dirpath."/tests/t");
         @mkdir($this->dirpath."/tests/r");
 
-#        // function related tests
-#        foreach ($this->functions as $function) {
-#            $function->writeTest($this);
-#        }
+        copy("@DATADIR@/CodeGen_MySQL/test.sh", $this->dirpath."/tests/test.sh");
+
+        chmod($this->dirpath."/tests/test.sh", 0555);
 
         // custom test cases (may overwrite custom function test cases)
         foreach ($this->testcases as $test) {
@@ -431,7 +432,6 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo $t
 
     function testFactory()
     {
-        error_log("MySQL test factory");
         return new CodeGen_MySQL_Element_Test(); 
     }
 }   

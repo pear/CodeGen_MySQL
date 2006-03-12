@@ -98,6 +98,7 @@ abstract class CodeGen_MySQL_ExtensionParser
     function tagend_tests($attr, $data) {
         return true;
     }
+
 }
 
 

@@ -43,6 +43,7 @@
         </dir>
         <file role="data" name="data/ax_compare_version.m4" install-as="ax_compare_version.m4" />
         <file role="data" name="data/mysql.m4" install-as="mysql.m4" />
+        <file role="data" name="data/test.sh"  install-as="test.sh" />
       </dir>
     </filelist>
   </release>
