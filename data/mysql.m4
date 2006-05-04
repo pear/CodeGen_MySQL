@@ -219,6 +219,13 @@ AC_DEFUN([MYSQL_DEBUG_SERVER], [
     done
   fi
 
+  if test "$MYSQL_DBUG" = "unknown"
+  then
+    # still unknown? make sure not to use it then
+    AC_DEFINE([DBUG_OFF], [1], [Don't use libdbug])
+    MYSQL_DBUG="unknown, assuming no"
+  fi
+
   AC_MSG_RESULT($MYSQL_DBUG)
   # 
 ])
