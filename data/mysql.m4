@@ -183,16 +183,16 @@ AC_DEFUN([MYSQL_DEBUG_SERVER], [
   CFLAGS="$CFLAGS $MYSQL_CONFIG_INCLUDE"
   # check for DBUG_ON/OFF being defined in my_config.h
   AC_TRY_COMPILE(,[
-    #include "my_config.h"
-    #ifdef DBUG_ON
-    int ok;
-    #else
-    #  ifdef DBUG_OFF
-      int ok;
-    #  else
-    choke me
-    #  endif
-    #endif
+#include "my_config.h"
+#ifdef DBUG_ON
+  int ok;
+#else
+#  ifdef DBUG_OFF
+  int ok;
+#  else
+  choke me
+#  endif
+#endif
   ],AS_VAR_SET(MYSQL_DBUG, ["defined by header file"]),AS_VAR_SET(MYSQL_DBUG, unknown))
   CFLAGS=$OLD_CFLAGS
 
