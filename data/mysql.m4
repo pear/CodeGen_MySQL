@@ -32,9 +32,11 @@ AC_DEFUN([WITH_MYSQL], [
       if test -x $withval -a -f $withval
       then
         MYSQL_CONFIG=$withval
+        MYSQL_PREFIX=`dirname \`dirname $withval\``
       elif test -x $withval/bin/mysql_config -a -f $withval/bin/mysql_config
       then 
         MYSQL_CONFIG=$withval/bin/mysql_config
+        MYSQL_PREFIX=$withval
       fi
     fi
   ], [
@@ -45,10 +47,11 @@ AC_DEFUN([WITH_MYSQL], [
       MYSQL_CONFIG="no"
     elif MYSQL_CONFIG=`which mysql_config` 
     then      
-      true # noop
+      MYSQL_PREFIX=`dirname \`dirname $MYSQL_CONFIG\``
     elif test -x /usr/local/mysql/bin/mysql_config -a -f /usr/local/mysql/bin/mysql_config 
     then
       MYSQL_CONFIG=/usr/local/mysql/bin/mysql_config
+      MYSQL_PREFIX=/usr/local/mysql
     fi
   ])
 
@@ -58,6 +61,7 @@ AC_DEFUN([WITH_MYSQL], [
   elif test "$MYSQL_CONFIG" = "no" 
   then
     MYSQL_CONFIG=""
+    MYSQL_PREFIX=""
     AC_MSG_RESULT([no])
   else
     if test "x$MYSQL_SRCDIR" != "x"
@@ -69,7 +73,6 @@ AC_DEFUN([WITH_MYSQL], [
 
       MYSQL_CONFIG_INCLUDE=`$MYSQL_CONFIG --include`
       MYSQL_CONFIG_LIBS_R=`$MYSQL_CONFIG --libs_r`
-
 
       AC_MSG_RESULT($MYSQL_CONFIG)
     fi
@@ -167,6 +170,61 @@ AC_DEFUN([MYSQL_NEED_VERSION], [
 
 
 
+dnl check whether the installed server was compiled with libdbug
+dnl
+dnl MYSQL_DEBUG_SERVER()
+dnl
+AC_DEFUN([MYSQL_DEBUG_SERVER], [
+  AC_MSG_CHECKING(for mysqld debug version)
+
+  MYSQL_DBUG=unknown
+
+  OLD_CFLAGS=$CFLAGS
+  CFLAGS="$CFLAGS $MYSQL_CONFIG_INCLUDE"
+  # check for DBUG_ON/OFF being defined in my_config.h
+  AC_TRY_COMPILE(,[
+    #include "my_config.h"
+    #ifdef DBUG_ON
+    int ok;
+    #else
+    #  ifdef DBUG_OFF
+      int ok;
+    #  else
+    choke me
+    #  endif
+    #endif
+  ],AS_VAR_SET(MYSQL_DBUG, ["defined by header file"]),AS_VAR_SET(MYSQL_DBUG, unknown))
+  CFLAGS=$OLD_CFLAGS
+
+
+  if test "$MYSQL_DBUG" = "unknown"
+  then
+    # fallback: need to check mysqld binary itself
+    # check $prefix/libexec, $prefix/sbin, $prefix/bin in that order
+    for dir in libexec sbin bin
+    do
+      MYSQLD=$MYSQL_PREFIX/$dir/mysqld
+      if test -f $MYSQLD -a -x $MYSQLD
+      then
+        if ($MYSQLD --help --verbose | grep -q -- "--debug")
+        then
+          AC_DEFINE([DBUG_ON], [1], [Use libdbug])
+          MYSQL_DBUG=yes
+        else
+          AC_DEFINE([DBUG_OFF], [1], [Don't use libdbug])
+          MYSQL_DBUG=no
+        fi
+        break;
+      fi
+    done
+  fi
+
+  AC_MSG_RESULT($MYSQL_DBUG)
+  # 
+])
+
+
+
 dnl set up variables for compilation of regular C API applications
 dnl 
 dnl MYSQL_USE_CLIENT_API()
@@ -240,6 +298,8 @@ AC_DEFUN([MYSQL_USE_UDF_API], [
 
   MYSQL_CFLAGS="$MYSQL_CFLAGS $ADDFLAGS"    
   MYSQL_CXXFLAGS="$MYSQL_CXXFLAGS $ADDFLAGS"    
+
+  MYSQL_DEBUG_SERVER()
 ])
 
 
