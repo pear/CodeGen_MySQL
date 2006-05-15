@@ -311,8 +311,8 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo $t
         echo "{$this->name}_la_CXXFLAGS = @MYSQL_CFLAGS@\n";
         echo "{$this->name}_la_LDFLAGS = -module -avoid-version -no-undefined\n";
         echo "{$this->name}_la_SOURCES = {$this->name}.".$this->language;
-        if (isset($this->packageFiles['source'])) {
-            foreach ($this->packageFiles['source'] as $file) {
+        if (isset($this->packageFiles['code'])) {
+            foreach ($this->packageFiles['code'] as $file) {
                 echo " ".basename($file);
             }
         }
