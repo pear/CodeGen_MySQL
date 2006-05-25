@@ -339,7 +339,7 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo $t
         $configure = new CodeGen_Tools_Outbuf($this->dirpath."/configure.in");
 
         echo "AC_INIT({$this->name}.".$this->language.")\n";
-        echo "AM_INIT_AUTOMAKE({$this->name}.so, ". $this->release->getVersion() .")\n";
+        echo "AM_INIT_AUTOMAKE(UDF-{$this->name}, ". $this->release->getVersion() .")\n";
         echo "\n";
 
         foreach ($this->configfragments['top'] as $fragment) {
