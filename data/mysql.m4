@@ -74,6 +74,8 @@ AC_DEFUN([WITH_MYSQL], [
       MYSQL_CONFIG_INCLUDE=`$MYSQL_CONFIG --include`
       MYSQL_CONFIG_LIBS_R=`$MYSQL_CONFIG --libs_r`
 
+      MYSQL_CLIENT=`dirname $MYSQL_CONFIG`/mysql
+
       AC_MSG_RESULT($MYSQL_CONFIG)
     fi
   fi
@@ -142,6 +144,7 @@ AC_DEFUN([MYSQL_SUBST], [
   AC_SUBST([MYSQL_LDFLAGS])
   AC_SUBST([MYSQL_LIBS])
   AC_SUBST([MYSQL_VERSION])
+  AC_SUBST([MYSQL_PLUGIN_DIR])
 ])
 
 
@@ -254,8 +257,10 @@ dnl
 dnl MYSQL_USE_NDB_API()
 dnl
 AC_DEFUN([MYSQL_USE_NDB_API], [
-  MYSQL_USE_API();
+  MYSQL_USE_CLIENT_API()
+  AC_PROG_CXX
   MYSQL_CHECK_VERSION([5.0.0],[  
+
     # mysql_config results need some post processing for now
 
     # the include pathes changed in 5.1.x due
@@ -327,6 +332,8 @@ AC_DEFUN([MYSQL_USE_PLUGIN_API], [
 
   MYSQL_CFLAGS="$MYSQL_CFLAGS $ADDFLAGS -DMYSQL_DYNAMIC_PLUGIN"    
   MYSQL_CXXFLAGS="$MYSQL_CXXFLAGS $ADDFLAGS"    
+
+  MYSQL_PLUGIN_DIR=`$MYSQL_CLIENT -BNe "show variables like 'plugin_dir'" | sed -e "s/^plugin_dir\t//g"`
 ])
 
 
