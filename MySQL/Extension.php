@@ -61,6 +61,13 @@ abstract class CodeGen_MySQL_Extension
      */
     protected $testcases = array();
 
+    /** 
+     * Custom library install dir
+     *
+     * @var string
+     */
+    protected $libdir = "";
+
     // {{{ constructor
     
     /**
@@ -306,6 +313,9 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo $t
         // Makefile.am
         $makefile = new CodeGen_Tools_Outbuf($this->dirpath."/Makefile.am");
 
+        if (!empty($this->libdir)) {
+            echo "libdir={$this->libdir}\n";
+        }
         echo "lib_LTLIBRARIES = {$this->name}.la\n";
         echo "{$this->name}_la_CFLAGS = @MYSQL_CFLAGS@\n";
         echo "{$this->name}_la_CXXFLAGS = @MYSQL_CFLAGS@\n";
@@ -318,7 +328,7 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo $t
         }
         echo "\n";
         echo "test: all\n";
-        echo "\tcd tests; ./test.sh\n";
+        echo "\tcd tests; ./test.sh\n";        
 
         $makefile->write();
     
@@ -413,6 +423,7 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo $t
     /**
      * Create test files
      *
+     * @void
      */
     function writeTests()
     {
