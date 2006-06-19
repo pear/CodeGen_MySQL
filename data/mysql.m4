@@ -291,8 +291,28 @@ AC_DEFUN([MYSQL_USE_NDB_API], [
     MYSQL_CFLAGS="$MYSQL_CFLAGS $ADDFLAGS"
     MYSQL_CXXFLAGS="$MYSQL_CXXFLAGS $ADDFLAGS"
 
+    # check for ndbapi header file NdbApi.hpp
+    AC_LANG_PUSH(C++)
+    OLD_CXXFLAGS=$CXXFLAGS
+    CXXFLAGS="$CXXFLAGS $MYSQL_CXXFLAGS"
+    AC_CHECK_HEADER([NdbApi.hpp],,[AC_ERROR(["Can't find NdbApi header files"])])
+    CXXFLAGS=$OLD_CXXFLAGS
+    AC_LANG_POP()
+
+    # check for the ndbapi client library
+    AC_LANG_PUSH(C++)
+    OLD_LIBS=$LIBS
+    LIBS="$LIBS $MYSQL_LIBS -lmysys -lmystrings"
+    OLD_LDFLAGS=$LDFLAGS
+    LDFLAGS="$LDFLAGS $MYSQL_LDFLAGS"
+    AC_CHECK_LIB([ndbclient],[ndb_init],,[AC_ERROR(["Can't find NdbApi client lib"])]) 
+    LIBS=$OLD_LIBS
+    LDFLAGS=$OLD_LDFLAGS
+    AC_LANG_POP()
+
     # add the ndbapi specific static libs
     MYSQL_LIBS="$MYSQL_LIBS -lndbclient -lmysys -lmystrings "    
+
   ],[
     AC_ERROR(["NdbApi needs at lest MySQL 5.0"])
   ])
