@@ -24,8 +24,8 @@ AC_DEFUN([WITH_MYSQL], [
   # search for the script in there
   # if no path is given at all we look for the script in
   # /usr/bin and /usr/local/mysql/bin
-  AC_ARG_WITH(mysql, [  --with-mysql=PATH   path to mysql_config binary or mysql prefix dir], [
-    if test $withval == "no"
+  AC_ARG_WITH(mysql, [  --with-mysql=PATH       path to mysql_config binary or mysql prefix dir], [
+    if test $withval = "no"
     then
       MYSQL_CONFIG="no"
     else
@@ -132,7 +132,7 @@ dnl
 dnl MYSQL_SUBST()
 dnl
 AC_DEFUN([MYSQL_SUBST], [
-  if test "$MYSQL_VERSION" == "none" 
+  if test "$MYSQL_VERSION" = "none" 
   then
     AC_MSG_ERROR([MySQL required but not found])
   fi
@@ -247,8 +247,12 @@ AC_DEFUN([MYSQL_USE_CLIENT_API], [
   MYSQL_CXXFLAGS="$MYSQL_CXXFLAGS $ADDFLAGS"    
 
   # add linker flags for client lib
-  MYSQL_LDFLAGS="$MYSQL_LDFLAGS $MYSQL_CONFIG_LIBS_R"
+  AC_ARG_ENABLE([embedded-mysql], [  --enable-embedded-mysql enable the MySQL embedded server feature], 
+    [MYSQL_LDFLAGS="$MYSQL_LDFLAGS "`$MYSQL_CONFIG --libmysqld-libs`],
+    [MYSQL_LDFLAGS="$MYSQL_LDFLAGS $MYSQL_CONFIG_LIBS_R"])
 ])
+
+
 
 
 
