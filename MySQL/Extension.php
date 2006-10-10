@@ -68,6 +68,13 @@ abstract class CodeGen_MySQL_Extension
      */
     protected $libdir = "";
 
+    /**
+     * Is the full source needed to compile this?
+     *
+     * @var bool
+     */
+    protected $needSource = false;
+
     // {{{ constructor
     
     /**
@@ -82,11 +89,21 @@ abstract class CodeGen_MySQL_Extension
     // }}} 
     
     // {{{ member adding functions
+
+    /**
+     * Do we need the full source to compile? 
+     *
+     * @param  bool 
+     */
+    function setNeedSource($flag)
+    {
+        $this->needSource = (bool)$flag;
+    }
     
     // }}} 
 
     // {{{ output generation
-        
+
 
     // {{{ license and authoers
     /**
@@ -134,7 +151,7 @@ abstract class CodeGen_MySQL_Extension
             $this->addPackageFile("doc", "AUTHORS");
             echo "{$this->name}\n";
             $names = array();
-            foreach($this->authors as $author) {
+            foreach ($this->authors as $author) {
                 $names[] = $author->getName();
             }
             echo join(", ", $names) . "\n";
@@ -364,6 +381,12 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo $t
             echo "AC_LANG([C++])\n";
         }
 
+        if ($this->needSource) {
+            echo "WITH_MYSQL_SRC()\n";
+        } else {
+            echo "WITH_MYSQL()\n";
+        }      
+
         foreach ($this->configfragments['bottom'] as $fragment) {
             echo "$fragment\n";
         }
@@ -409,7 +432,8 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo $t
      * @access public
      * @param  object  a Test object
      */
-    function addTest(CodeGen_MySQL_Element_Test $test) {
+    function addTest(CodeGen_MySQL_Element_Test $test) 
+    {
         $name = $test->getName();
        
         if (isset($this->testcases[$name])) {
@@ -455,4 +479,3 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo $t
  * indent-tabs-mode:nil
  * End:
  */
-?>

@@ -59,7 +59,8 @@ class CodeGen_MySQL_Element_Test
      *
      * @access public
      * @return string  value of
-     */ function setName($name) 
+     */ 
+    function setName($name) 
     {
         if (! preg_match('|^[\w-]+$|i', $name)) {
             return PEAR::raiseError("'$name' is not a valid test case basename");
@@ -192,20 +193,20 @@ class CodeGen_MySQL_Element_Test
     {
         $extName = $extension->getName();
 
-        $testName   = "tests/t/{$this->name}.test";
+        $testName = "tests/t/{$this->name}.test";
         $extension->addPackageFile("test", $testName);
 
-        $file = new CodeGen_Tools_Outbuf($extension->dirpath."/".$testName);		
-		echo "# Package: $extName   Test: {$this->name}\n#\n";
-		echo preg_replace("/^/", "# ", $this->description);
-		echo $this->code;
+        $file = new CodeGen_Tools_Outbuf($extension->dirpath."/".$testName);        
+        echo "# Package: $extName   Test: {$this->name}\n#\n";
+        echo preg_replace("/^/", "# ", $this->description);
+        echo $this->code;
         $file->write();
 
         $resultName = "tests/r/{$this->name}.result";
         $extension->addPackageFile("test", $resultName);
 
-        $file = new CodeGen_Tools_Outbuf($extension->dirpath."/".$resultName);		
-		echo $this->result;
+        $file = new CodeGen_Tools_Outbuf($extension->dirpath."/".$resultName);      
+        echo $this->result;
         $file->write();
     }
 }
