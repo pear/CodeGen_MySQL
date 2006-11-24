@@ -20,8 +20,8 @@
 
   <release>
     <state>alpha</state>
-    <version>0.1.1dev</version>
-    <date>2005-09-06</date>
+    <version>0.1.2dev</version>
+    <date>2006-11-24</date>
     <notes>
      initial package for proposal process
     </notes>
