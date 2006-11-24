@@ -22,7 +22,7 @@
 /**
  * includes
  */
-require_once "CodeGen/PECL/Element.php";
+require_once "CodeGen/Element.php";
 
 /**
  * Class for testfile generation as needed for 'make test'
@@ -36,7 +36,7 @@ require_once "CodeGen/PECL/Element.php";
  * @link       http://pear.php.net/package/CodeGen
  */
 class CodeGen_MySQL_Element_Test
-    extends CodeGen_PECL_Element
+    extends CodeGen_Element
 {
     /** 
      * Constructor
