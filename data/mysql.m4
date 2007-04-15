@@ -119,7 +119,7 @@ AC_DEFUN([WITH_MYSQL_SRC], [
 
   if test "x$MYSQL_SRCDIR" != "x"
   then
-    MYSQL_CONFIG_INCLUDE="-I$MYSQL_SRCDIR/include -I$MYSQL_SRCDIR"
+    MYSQL_CONFIG_INCLUDE="-I$MYSQL_SRCDIR/include"
     MYSQL_CONFIG_LIBS_R="-L$MYSQL_SRCDIR/libmysql_r/.libs -lmysqlclient_r -lz -lm"
   fi
 ])
@@ -236,6 +236,7 @@ AC_DEFUN([MYSQL_DEBUG_SERVER], [
 
 
 dnl set up variables for compilation of regular C API applications
+dnl with optional embedded server
 dnl 
 dnl MYSQL_USE_CLIENT_API()
 dnl
@@ -248,10 +249,64 @@ AC_DEFUN([MYSQL_USE_CLIENT_API], [
 
   # add linker flags for client lib
   AC_ARG_ENABLE([embedded-mysql], [  --enable-embedded-mysql enable the MySQL embedded server feature], 
-    [MYSQL_LDFLAGS="$MYSQL_LDFLAGS "`$MYSQL_CONFIG --libmysqld-libs`],
+    [MYSQL_EMBEDDED_LDFLAGS()],
     [MYSQL_LDFLAGS="$MYSQL_LDFLAGS $MYSQL_CONFIG_LIBS_R"])
 ])
 
+
+
+dnl set up variables for compilation of regular C API applications
+dnl with mandatory embedded server
+dnl 
+dnl MYSQL_USE_EMBEDDED_API()
+dnl
+AC_DEFUN([MYSQL_USE_EMBEDDED_API], [
+  # add regular MySQL C flags
+  ADDFLAGS=$MYSQL_CONFIG_INCLUDE 
+
+  MYSQL_CFLAGS="$MYSQL_CFLAGS $ADDFLAGS"    
+  MYSQL_CXXFLAGS="$MYSQL_CXXFLAGS $ADDFLAGS"    
+
+  MYSQL_EMBEDDED_LDFLAGS()
+])
+
+
+dnl
+AC_DEFUN([MYSQL_EMBEDDED_LDFLAGS], [
+  MYSQL_LDFLAGS="$MYSQL_LDFLAGS "`$MYSQL_CONFIG --libmysqld-libs`
+
+  AC_MSG_CHECKING([for missing libs])
+  OLD_CFLAGS=$CFLAGS
+  OLD_LIBS=$LIBS
+  CFLAGS="$CFLAGS $MYSQL_CFLAGS"
+  for MISSING_LIBS in " " "-lz" "-lssl" "-lz -lssl"
+  do
+    LIBS="$OLD_LIBS $MYSQL_LDFLAGS $MISSING_LIBS"
+    AC_TRY_LINK([
+#include <stdio.h>
+#include <mysql.h>
+    ],[ 
+      mysql_server_init(0, NULL, NULL);
+    ], [
+      LINK_OK=yes
+    ], [
+      LINK_OK=no
+    ])
+    if test $LINK_OK = "yes"
+    then
+      MYSQL_LDFLAGS="$MYSQL_LDFLAGS $MISSING_LIBS"
+      AC_MSG_RESULT([$MISSING_LIBS])
+      break;
+    fi
+  done
+  if test $LINK_OK = "no"
+  then
+    AC_MSG_ERROR([linking still fails])
+  fi
+
+  LIBS=$OLD_LIBS
+  CFLAGS=$OLD_CFLAGS
+])
 
 
 
