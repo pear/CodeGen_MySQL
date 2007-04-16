@@ -111,7 +111,7 @@ abstract class CodeGen_MySQL_Extension
      *
      * @return string  code fragment
      */
-    function getLicense() 
+    function getLicenseComment() 
     {    
         $code = "/*\n";
         $code.= "   +----------------------------------------------------------------------+\n";
