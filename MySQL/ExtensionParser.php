@@ -31,12 +31,12 @@ require_once "CodeGen/Tools/Indent.php";
  * A class that generates MySQL soure and documenation files
  *
  * @category   Tools and Utilities
- * @package    CodeGen_MySQL_UDF
+ * @package    CodeGen_MySQL
  * @author     Hartmut Holzgraefe <hartmut@php.net>
  * @copyright  2005 Hartmut Holzgraefe
  * @license    http://www.php.net/license/3_0.txt  PHP License 3.0
  * @version    Release: @package_version@
- * @link       http://pear.php.net/package/CodeGen_MySQL_UDF
+ * @link       http://pear.php.net/package/CodeGen_MySQL
  */
 abstract class CodeGen_MySQL_ExtensionParser 
     extends CodeGen_ExtensionParser
