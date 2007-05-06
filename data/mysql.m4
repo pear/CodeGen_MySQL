@@ -175,6 +175,15 @@ AC_DEFUN([MYSQL_NEED_VERSION], [
 
 dnl check whether the installed server was compiled with libdbug
 dnl
+dnl TODO we also need to figure out whether we need to define
+dnl SAFEMALLOC, maybe PEDANTIC_SAFEMALLOC and SAFE_MUTEX, too
+dnl else we may run into errors like 
+dnl
+dnl   Can't open shared library '...' 
+dnl   (errno: 22 undefined symbol: my_no_flags_free)
+dnl
+dnl on loading plugins
+dnl
 dnl MYSQL_DEBUG_SERVER()
 dnl
 AC_DEFUN([MYSQL_DEBUG_SERVER], [
@@ -184,6 +193,8 @@ AC_DEFUN([MYSQL_DEBUG_SERVER], [
 
   OLD_CFLAGS=$CFLAGS
   CFLAGS="$CFLAGS $MYSQL_CONFIG_INCLUDE"
+  OLD_CXXFLAGS=$CXXFLAGS
+  CXXFLAGS="$CXXFLAGS $MYSQL_CONFIG_INCLUDE"
   # check for DBUG_ON/OFF being defined in my_config.h
   AC_TRY_COMPILE(,[
 #include "my_config.h"
@@ -198,6 +209,7 @@ AC_DEFUN([MYSQL_DEBUG_SERVER], [
 #endif
   ],AS_VAR_SET(MYSQL_DBUG, ["defined by header file"]),AS_VAR_SET(MYSQL_DBUG, unknown))
   CFLAGS=$OLD_CFLAGS
+  CXXFLAGS=$OLD_CXXFLAGS
 
 
   if test "$MYSQL_DBUG" = "unknown"
@@ -415,6 +427,8 @@ AC_DEFUN([MYSQL_USE_PLUGIN_API], [
   MYSQL_CXXFLAGS="$MYSQL_CXXFLAGS -fno-implicit-templates -fno-exceptions -fno-rtti"    
 
   MYSQL_PLUGIN_DIR=`$MYSQL_CLIENT -BNe "show variables like 'plugin_dir'" | sed -e "s/^plugin_dir\t//g"`
+
+  MYSQL_DEBUG_SERVER()
 ])
 
 
